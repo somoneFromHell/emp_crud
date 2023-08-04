@@ -1,23 +1,24 @@
-import logo from './logo.svg';
-import './App.css';
+import "./App.css";
+import DepartmentMasterTable from "./DepartmentMaster/DepartmentTable";
+import Dashboard from "./Dashboard/Dashboard";
+import EmployeeTable from "./EmployeeForm/EmployeeTable";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import NavBar from "./layout/navbar";
+import { Segment } from "semantic-ui-react";
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div>
+      <Router>
+          <NavBar></NavBar>
+          <Segment  className="App">
+        <Routes>
+          <Route path="/" element={<Dashboard></Dashboard>} />
+          <Route path="/department" element={<DepartmentMasterTable></DepartmentMasterTable>} />
+          <Route path="/employee" element={<EmployeeTable></EmployeeTable>} />
+        </Routes>
+        </Segment>
+      </Router>
     </div>
   );
 }
