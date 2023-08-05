@@ -5,7 +5,7 @@ import { useFormik } from "formik";
 import * as Yup from "yup";
 
 const EmployeeForm = (props) => {
-
+  const [IsSubmitting,setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState(props.empDataForUpdate||{
     firstName: "",
     middleName: "",
@@ -25,20 +25,71 @@ const EmployeeForm = (props) => {
   });
 
 
-  console.log(formData)
 
   const postData = (data) => {
+    setIsSubmitting(true)
     axios
       .post("http://localhost:3200/api/employee", data)
       .then((response) => {
         console.log("Response:", response.data.data);
+        setIsSubmitting(false)
+        props.closeModal()
+        props.fatchData()
+        props.setMessage({
+          status:true,
+          header:"data added successfully",
+          content:"somthing",
+          color:"green"
+        })
         // Handle successful response here
       })
       .catch((error) => {
         console.error("Error:", error);
+        props.setMessage({
+          status:true,
+          header:"error in submittiong data",
+          content:"somthing",
+          color:"red"
+        })
         // Handle error here
       });
+
+      
   };
+
+  const updateData = data => {
+    setIsSubmitting(true)
+
+    axios
+    .put("http://localhost:3200/api/employee/"+data._id, data)
+    .then((response) => {
+      console.log("Response:", response.data.data);
+      setIsSubmitting(false)
+      props.closeModal()
+      props.fatchData()
+
+      props.setMessage({
+        status:true,
+        header:"data updated successfully",
+        content:"somthing",
+        color:"green"
+      })
+
+      // Handle successful response here
+    })
+    .catch((error) => {
+      console.error("Error:", error);
+      props.setMessage({
+        status:true,
+        header:"error in update",
+        content:"somthing",
+        color:"red"
+      })
+      // Handle error here
+    });
+  }
+
+
 
   const bloodGroupOptions = [
     { text: "B+", value: "B+", key: "B+" },
@@ -102,13 +153,13 @@ const EmployeeForm = (props) => {
         .matches(
           /^((\\+[1-9]{1,4}[ \\-]*)|(\\([0-9]{2,3}\\)[ \\-]*)|([0-9]{2,4})[ \\-]*)*?[0-9]{3,4}?[ \\-]*[0-9]{3,4}?$/,
           "Phone number is not valid"
-        ).max(10,"too long"),
+        ).max(10,"not valid").min(10,"not valid"),
       emergencyContactNo: Yup.string().matches(
         /^((\\+[1-9]{1,4}[ \\-]*)|(\\([0-9]{2,3}\\)[ \\-]*)|([0-9]{2,4})[ \\-]*)*?[0-9]{3,4}?[ \\-]*[0-9]{3,4}?$/,
         "Phone number is not valid"
-      ).max(10,"too long"),
+      ).max(10,"not valid").min(10,"not valid"),
       companyEmail: Yup.string("its not evan a string")
-        .required()
+        .required("Required")
         .email("enter valid email"),
 
       department: Yup.string().required("required"),
@@ -122,12 +173,17 @@ const EmployeeForm = (props) => {
 
     }),
     onSubmit: values => {
-      postData(values)
+       if(values._id){
+         updateData(values)
+       }else{
+         postData(values)
+       }
     },
   });
 
   return (
     <div>
+      
       <Form  onSubmit={formik.handleSubmit}>
         <Form.Group>
           <Form.Input
@@ -324,7 +380,7 @@ const EmployeeForm = (props) => {
           error={formik.touched.address && formik.errors.address}
         />
         <Form.Checkbox label="Employment Status" />
-        <Form.Button>Submit</Form.Button>
+        <Form.Button type="submit" >Submit</Form.Button>
       </Form>
     </div>
   );

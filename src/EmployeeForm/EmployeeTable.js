@@ -2,80 +2,146 @@ import React, { useEffect, useState } from "react";
 import { Table } from "semantic-ui-react";
 import "semantic-ui-css/semantic.min.css";
 import axios from "axios";
-import { Icon, Button, Modal, Header, Image } from "semantic-ui-react";
+import {
+  Icon,
+  Button,
+  Modal,
+  Popup,
+  Message,
+
+} from "semantic-ui-react";
 import EmployeeForm from "./EmployeeForm";
 
 const FormModal = (props) => {
-
-  const triggerSubmit = () => {
-      
-  }
+  const triggerSubmit = () => {};
   return (
     <div>
       <Modal
         style={{ right: "0px", height: "auto" }}
         onClose={props.closeModal}
         open={props.isModalOpen}
+        fatchData={props.fatchData}
       >
         <Modal.Header>Add employee Data</Modal.Header>
         <Modal.Content style={{ display: "flex", justifyContent: "center" }}>
-          <EmployeeForm empDataForUpdate = {props.empDataForUpdate} ></EmployeeForm>
+          <EmployeeForm
+            empDataForUpdate={props.empDataForUpdate}
+            setMessage = {props.setMessage}
+            closeModal = {props.closeModal}
+            fatchData = {props.fatchData}
+          ></EmployeeForm>
         </Modal.Content>
         <Modal.Actions>
-        <Button
-          content="cancel"
-          labelPosition='left'
-          icon='checkmark'
-          onClick={props.closeModal}
-          negative
-        />
-        <Button
-          content="save"
-          labelPosition='right'
-          icon='save'
-          onClick={() => triggerSubmit}
-          positive
-        />
-      </Modal.Actions>
+          <Button
+            content="cancel"
+            labelPosition="left"
+            icon="checkmark"
+            onClick={props.closeModal}
+            negative
+          />
+          <Button
+            content="save"
+            labelPosition="right"
+            icon="save"
+            onClick={() => triggerSubmit}
+            positive
+          />
+        </Modal.Actions>
       </Modal>
     </div>
   );
 };
 
-
-
 const EmployeeTable = () => {
   const [employeeData, setEmployeeData] = useState([]);
+  const [message, setMessageVariable] = useState({});
 
-  useEffect(() => {
+const setMessage = (da) => {
+  setMessageVariable(da)
+  setTimeout(function() {
+    setMessageVariable({})
+  }, 2000);
+}
+
+  const fatchData = () => {
     axios
       .get("http://localhost:3200/api/employee")
       .then((response) => {
-        setEmployeeData(response.data.data);
+        const fatchedData = response.data.data;
+          fatchedData.map((item)=>{
+            item.birthDate = item.birthDate.split("T")[0]
+            item.joiningDate = item.joiningDate.split("T")[0]
+          })
+        
+        setEmployeeData(fatchedData);
         console.log(response.data.data);
       })
       .catch((error) => {
         console.error("Error fetching employee data:", error);
       });
-  }, []);
+  }
+
+
+  const deleteData = (id) => {
+    axios
+    .delete("http://localhost:3200/api/employee/"+id)
+    .then((response) => {
+      fatchData()
+      setMessage({
+        status:true,
+        header:"data deleted successfully",
+        content:"deleted"||response,
+        color:"brown"
+      })
+    })
+    .catch((error) => {
+      console.error("Error deleting employee data:", error);
+    });
+  }
+
+  useEffect(fatchData, []);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [empDataForUpdate, setFormData] = useState({});
 
-  const closeModal =()=>{
-    setIsModalOpen(false)
-  }
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setFormData({});
+  };
 
   const handleEdit = (data) => {
-    setIsModalOpen(true)
-    setFormData(data)
+    setIsModalOpen(true);
+    setFormData(data);
     console.log(data);
   };
 
+
   return (
     <div className="">
-      <FormModal isModalOpen={isModalOpen} empDataForUpdate={empDataForUpdate} closeModal={closeModal} ></FormModal>
-      <Button onClick={()=>{setIsModalOpen(true)}}>add</Button>
+      {message.status && (
+        <Message
+        
+          success
+          header={message.header}
+          content={message.content}
+          color={message.color}
+        />
+      )}
+
+      <FormModal
+        isModalOpen={isModalOpen}
+        empDataForUpdate={empDataForUpdate}
+        closeModal={closeModal}
+        setMessage={setMessage}
+        fatchData={fatchData}
+      ></FormModal>
+      <Button
+        onClick={() => {
+          setIsModalOpen(true);
+        }}
+      >
+        add
+      </Button>
       <Table celled>
         <Table.Header>
           <Table.Row>
@@ -106,12 +172,23 @@ const EmployeeTable = () => {
                 {employee.firstName +
                   " " +
                   employee.middleName +
-                  "" +
+                  " " +
                   employee.lastName}
               </Table.Cell>
               {/* <Table.Cell>{employee.birthDate}</Table.Cell> */}
               {/* <Table.Cell>{employee.bloodGroup}</Table.Cell> */}
-              <Table.Cell>{employee.email}</Table.Cell>
+              <Popup
+                content={
+                  "mail to" +
+                  employee.firstName +
+                  " " +
+                  employee.middleName +
+                  " " +
+                  employee.lastName
+                }
+                trigger={<Table.Cell>{employee.email}</Table.Cell>}
+              />
+
               <Table.Cell>{employee.contactNo}</Table.Cell>
               <Table.Cell>{employee.emergencyContactNo}</Table.Cell>
               {/* <Table.Cell>{employee.address}</Table.Cell> */}
@@ -129,17 +206,15 @@ const EmployeeTable = () => {
                     handleEdit(employee);
                   }}
                 />
-                
 
                 <Icon
-                bordered 
+                  bordered
                   color="red"
                   name="trash"
                   onClick={() => {
-                    handleEdit(employee._id);
+                    deleteData(employee._id)
                   }}
                 />
-                
               </Table.Cell>
             </Table.Row>
           ))}
